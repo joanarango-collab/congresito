@@ -1,131 +1,144 @@
 import streamlit as st
 import plotly.graph_objects as go
 
-# --- 1. CONFIGURACIÓN DE PÁGINA ---
+# --- 1. CONFIGURACIÓN DE PÁGINA (ESTO DEBE IR PRIMERO) ---
 st.set_page_config(
     page_title="XI Congreso Prehospitalaria", 
     layout="wide", 
-    page_icon="☕"
+    page_icon="🚑",
+    initial_sidebar_state="collapsed"
 )
 
-# --- 2. ESTILOS CSS (REPLICANDO EL DISEÑO REACT/TAILWIND) ---
+# --- 2. INYECCIÓN DE ESTILOS CSS (REPLICANDO REACT PIXEL-PERFECT) ---
 st.markdown("""
 <style>
+    /* Importar fuente Inter para que se vea moderno */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
     
+    /* Reset total de Streamlit */
     .stApp {
         background-color: #f5f5f4; /* bg-stone-100 */
         font-family: 'Inter', sans-serif;
-        color: #292524;
+        color: #1c1917;
+    }
+    
+    /* Ocultar elementos molestos de Streamlit */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    .block-container {
+        padding-top: 1rem !important; 
+        padding-bottom: 2rem !important; 
+        padding-left: 2rem !important; 
+        padding-right: 2rem !important;
+        max-width: 100% !important;
     }
 
-    /* Ocultar elementos nativos de Streamlit que estorban */
-    header {visibility: hidden;}
-    .block-container {padding-top: 1rem; padding-bottom: 5rem;}
-
-    /* Clases de Utilidad estilo Tailwind */
-    .card {
+    /* Clases de Tarjetas idénticas a React */
+    .react-card {
         background-color: white;
-        border-radius: 0.75rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        border-radius: 0.75rem; /* rounded-xl */
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         border: 1px solid #e7e5e4;
         margin-bottom: 1.5rem;
         overflow: hidden;
     }
-    
-    .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
-    
-    /* Bordes de colores */
-    .border-t-blue { border-top: 4px solid #2563eb; }
-    .border-t-amber { border-top: 4px solid #d97706; }
-    .border-t-green { border-top: 4px solid #16a34a; }
-    .border-l-blue { border-left: 8px solid #3b82f6; }
-    .border-l-amber { border-left: 8px solid #d97706; }
-    .border-l-green { border-left: 8px solid #22c55e; }
-    .border-l-purple { border-left: 8px solid #7e22ce; }
 
-    /* Header */
-    .header-bg {
-        background: linear-gradient(to right, #1c1917, #292524);
-        border-bottom: 8px solid #d97706;
+    /* Header Gradiente */
+    .header-gradient {
+        background: linear-gradient(to right, #1c1917, #292524); /* stone-900 */
+        border-bottom: 6px solid #d97706; /* amber-600 */
         border-radius: 1rem;
-        color: white;
-        padding: 2rem;
-        margin-bottom: 2rem;
         position: relative;
         overflow: hidden;
+        color: white;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
     }
 
-    /* Tablas Personalizadas */
-    .custom-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-    .custom-table th {
+    /* Tablas personalizadas (Sin usar st.dataframe) */
+    .styled-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+    }
+    .styled-table thead tr {
         background-color: #fafaf9;
-        color: #78716c;
-        font-weight: 700;
-        text-transform: uppercase;
-        font-size: 0.75rem;
-        padding: 1rem;
-        text-align: left;
         border-bottom: 1px solid #e7e5e4;
     }
-    .custom-table td {
+    .styled-table th {
+        padding: 1rem;
+        text-align: left;
+        font-weight: 700;
+        color: #78716c;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+    }
+    .styled-table td {
         padding: 1rem;
         border-bottom: 1px solid #f5f5f4;
         color: #44403c;
-        vertical-align: middle;
     }
-    .custom-table tr:hover { background-color: #fafaf9; }
+    .styled-table tr:last-child td {
+        border-bottom: none;
+    }
 
-    /* Progress Bars Custom */
-    .progress-track { background-color: #f3f4f6; border-radius: 99px; height: 8px; width: 100%; overflow: hidden; }
-    .progress-fill-green { background-color: #16a34a; height: 100%; }
-    .progress-fill-amber { background-color: #d97706; height: 100%; }
-    .progress-fill-blue { background-color: #2563eb; height: 100%; }
+    /* Barras de progreso HTML */
+    .prog-track {
+        background-color: #f3f4f6;
+        border-radius: 9999px;
+        height: 8px;
+        width: 100%;
+        overflow: hidden;
+    }
+    .prog-fill {
+        height: 100%;
+        border-radius: 9999px;
+        transition: width 0.5s ease-in-out;
+    }
 
-    /* Badges */
-    .badge { padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; display: inline-block; }
-    .badge-blue { background: #eff6ff; color: #1e40af; }
-    .badge-amber { background: #fffbeb; color: #92400e; }
-    .badge-green { background: #f0fdf4; color: #166534; }
+    /* Utilidades de Texto */
+    .text-xs { font-size: 0.75rem; line-height: 1rem; }
+    .font-bold { font-weight: 700; }
+    .uppercase { text-transform: uppercase; }
+    .tracking-wider { letter-spacing: 0.05em; }
     
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. DATOS Y LÓGICA ---
+# --- 3. DEFINICIÓN DE ICONOS SVG (PARA QUE SE VEA IGUAL A LUCIDE-REACT) ---
+ICONS = {
+    "briefcase": """<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>""",
+    "layout": """<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>""",
+    "megaphone": """<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>""",
+    "check": """<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>""",
+    "users": """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>""",
+    "coffee": """<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 1 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" x2="6" y1="2" y2="4"/><line x1="10" x2="10" y1="2" y2="4"/><line x1="14" x2="14" y1="2" y2="4"/></svg>"""
+}
 
-# Datos de Gráficos (Tab 1)
-aliados_data = {"labels": ["Insumos Médicos", "Universidades", "Café/Alimentos"], "values": [10, 4, 3], "colors": ['#1e40af', '#3b82f6', '#93c5fd']}
-asistentes_data = {"labels": ["Estudiantes UTP", "Externos", "Staff/Ponentes"], "values": [140, 40, 20], "colors": ['#b45309', '#f59e0b', '#fcd34d']}
-cumplimiento_data = [
-    {"label": "Gestión Financiera", "value": 91},
-    {"label": "Logística (Montaje)", "value": 98},
-    {"label": "Comunicaciones", "value": 100},
-    {"label": "Asistencia (Aforo)", "value": 100}
-]
-
-# Datos de Fases (Tabs 2, 3, 4)
+# --- 4. DATOS ---
 phases = {
     "antes": [
         {
-            "name": "Gestión y Alianzas", "lead": "David Muñoz & Andrés Álvarez", "icon": "💼", "color": "text-blue-700", "bg": "bg-blue-50", "border": "border-l-blue",
+            "name": "Gestión y Alianzas", "lead": "David Muñoz & Andrés Álvarez", "icon": "briefcase", "color": "text-blue-700", "bg_icon": "bg-blue-50", "border": "border-blue-500", "bg_header": "bg-blue-50",
             "indicators": [
                 {"item": "Base de Datos Aliados", "meta": "1 BD", "ejec": "1 BD", "perc": 100},
-                {"item": "Contactar Empresas Insumos", "meta": "11", "ejec": "10", "perc": 91},
+                {"item": "Contactar Insumos", "meta": "11", "ejec": "10", "perc": 91},
                 {"item": "Contactar IPS/Brigadas", "meta": "12", "ejec": "7", "perc": 58},
                 {"item": "Gestión Universidades", "meta": "5", "ejec": "5", "perc": 100}
             ]
         },
         {
-            "name": "Logística", "lead": "Santiago Rendón & Leymar Portilla", "icon": "🛠️", "color": "text-amber-700", "bg": "bg-amber-50", "border": "border-l-amber",
+            "name": "Logística", "lead": "Santiago Rendón & Leymar Portilla", "icon": "layout", "color": "text-amber-700", "bg_icon": "bg-amber-50", "border": "border-amber-500", "bg_header": "bg-amber-50",
             "indicators": [
                 {"item": "Contactar Ponentes", "meta": "20", "ejec": "20", "perc": 100},
                 {"item": "Diseño Certificados", "meta": "1", "ejec": "1", "perc": 100},
                 {"item": "Gestión Mobiliario", "meta": "100%", "ejec": "100%", "perc": 100},
-                {"item": "Decoración Cafetera", "meta": "50 ítems", "ejec": "50", "perc": 100}
+                {"item": "Decoración Cafetera", "meta": "50", "ejec": "50", "perc": 100}
             ]
         },
         {
-            "name": "Comunicaciones", "lead": "Joan Sebastian Arango", "icon": "📢", "color": "text-green-700", "bg": "bg-green-50", "border": "border-l-green",
+            "name": "Comunicaciones", "lead": "Joan Sebastian Arango", "icon": "megaphone", "color": "text-green-700", "bg_icon": "bg-green-50", "border": "border-green-500", "bg_header": "bg-green-50",
             "indicators": [
                 {"item": "Manual de Marca", "meta": "1", "ejec": "1", "perc": 100},
                 {"item": "Campaña Expectativa", "meta": "3 Olas", "ejec": "3 Olas", "perc": 100},
@@ -135,8 +148,8 @@ phases = {
         }
     ],
     "durante": [
-        {
-            "name": "Gestión y Alianzas", "lead": "Equipo Gestión", "icon": "💼", "color": "text-blue-700", "bg": "bg-blue-50", "border": "border-l-blue",
+         {
+            "name": "Gestión y Alianzas", "lead": "Equipo Gestión", "icon": "briefcase", "color": "text-blue-700", "bg_icon": "bg-blue-50", "border": "border-blue-500", "bg_header": "bg-blue-50",
             "indicators": [
                 {"item": "Supervisión Stands", "meta": "15", "ejec": "15", "perc": 100},
                 {"item": "Entrega Refrigerios", "meta": "200", "ejec": "200", "perc": 100},
@@ -144,7 +157,7 @@ phases = {
             ]
         },
         {
-            "name": "Logística", "lead": "Equipo Logística", "icon": "🛠️", "color": "text-amber-700", "bg": "bg-amber-50", "border": "border-l-amber",
+            "name": "Logística", "lead": "Equipo Logística", "icon": "layout", "color": "text-amber-700", "bg_icon": "bg-amber-50", "border": "border-amber-500", "bg_header": "bg-amber-50",
             "indicators": [
                 {"item": "Soporte Auditorio", "meta": "100%", "ejec": "100%", "perc": 100},
                 {"item": "Control Asistencia", "meta": "200", "ejec": "200", "perc": 100},
@@ -152,7 +165,7 @@ phases = {
             ]
         },
         {
-            "name": "Comunicaciones", "lead": "Equipo Comunicaciones", "icon": "📢", "color": "text-green-700", "bg": "bg-green-50", "border": "border-l-green",
+            "name": "Comunicaciones", "lead": "Equipo Comunicaciones", "icon": "megaphone", "color": "text-green-700", "bg_icon": "bg-green-50", "border": "border-green-500", "bg_header": "bg-green-50",
             "indicators": [
                 {"item": "Cobertura Ponencias", "meta": "12", "ejec": "12", "perc": 100},
                 {"item": "Entrevistas", "meta": "10", "ejec": "8", "perc": 80},
@@ -162,7 +175,7 @@ phases = {
     ],
     "despues": [
         {
-            "name": "Cierre General", "lead": "Todas las Comisiones", "icon": "✅", "color": "text-purple-700", "bg": "bg-purple-50", "border": "border-l-purple",
+            "name": "Cierre General", "lead": "Todas las Comisiones", "icon": "check", "color": "text-purple-700", "bg_icon": "bg-purple-50", "border": "border-purple-500", "bg_header": "bg-purple-50",
             "indicators": [
                 {"item": "Cartas Agradecimiento", "meta": "17", "ejec": "17", "perc": 100},
                 {"item": "Certificados Enviados", "meta": "200", "ejec": "200", "perc": 100},
@@ -173,109 +186,106 @@ phases = {
     ]
 }
 
-# --- FUNCIONES DE GRÁFICOS ---
-def crear_dona(labels, values, colors, title):
-    fig = go.Figure(data=[go.Pie(labels=labels, values=values, hole=.7, 
-                                 marker=dict(colors=colors), textinfo='value', hoverinfo='label+value')])
-    fig.update_layout(showlegend=False, margin=dict(t=0, b=0, l=0, r=0), height=160,
-                      annotations=[dict(text=title, x=0.5, y=0.5, font_size=12, showarrow=False)])
-    return fig
-
-# --- 4. ESTRUCTURA DE LA PÁGINA ---
-
-# HEADER
-st.markdown("""
-<div class="header-bg">
-    <div style="display: flex; gap: 2rem; align-items: center; flex-wrap: wrap;">
-        <div style="background: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 50%; border: 2px solid rgba(245, 158, 11, 0.5); width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; font-size: 3rem;">
-            🚑
+# --- 5. RENDERIZADO DEL HEADER ---
+st.markdown(f"""
+<div class="header-gradient">
+    <div style="position: relative; z-index: 10; display: flex; align-items: center; gap: 2rem; flex-wrap: wrap;">
+        <div style="background: rgba(255,255,255,0.1); width: 120px; height: 120px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(245, 158, 11, 0.5); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);">
+            <div style="font-size: 3.5rem;">🚑</div>
         </div>
+        
         <div style="flex: 1;">
-            <div style="display: inline-block; background: rgba(217, 119, 6, 0.3); border: 1px solid #d97706; color: #fbbf24; font-size: 0.75rem; font-weight: 800; padding: 4px 12px; border-radius: 99px; text-transform: uppercase; margin-bottom: 0.5rem;">
-                ☕ Edición Especial: Identidad Cafetera
+            <div style="display: inline-flex; align-items: center; background: rgba(217, 119, 6, 0.2); border: 1px solid #d97706; color: #fbbf24; padding: 4px 12px; border-radius: 99px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 0.75rem;">
+                <span style="margin-right: 6px;">{ICONS['coffee']}</span> Edición Especial: Identidad Cafetera
             </div>
-            <h1 style="margin: 0; font-size: 2.5rem; font-weight: 800; line-height: 1.1;">
-                XI Congreso Nacional<br>
+            <h1 style="margin: 0; font-size: 2.5rem; font-weight: 800; line-height: 1.1; margin-bottom: 0.5rem;">
+                XI Congreso Nacional <br>
                 <span style="color: #f59e0b;">Medicina Prehospitalaria</span>
             </h1>
-            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                <span style="background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 6px; font-size: 0.85rem;">📅 23-25 Octubre 2025</span>
-                <span style="background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 6px; font-size: 0.85rem;">📍 Aud. Jorge Roa & Edif. 14</span>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <span style="background: rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 8px; font-size: 0.875rem; border: 1px solid rgba(255,255,255,0.1);">📅 23-25 Octubre 2025</span>
+                <span style="background: rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 8px; font-size: 0.875rem; border: 1px solid rgba(255,255,255,0.1);">📍 Aud. Jorge Roa & Edif. 14</span>
             </div>
         </div>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# TABS DE NAVEGACIÓN
+# --- 6. NAVEGACIÓN (TABS) ---
 tab1, tab2, tab3, tab4 = st.tabs(["📊 Visión General", "1️⃣ Pre-Evento", "2️⃣ Durante", "3️⃣ Post-Evento"])
 
-# --- TAB 1: VISIÓN GENERAL ---
+# --- TAB 1: VISIÓN GENERAL (GRÁFICOS) ---
 with tab1:
-    col_g1, col_g2, col_g3 = st.columns(3)
+    # FILA DE GRÁFICOS
+    c1, c2, c3 = st.columns(3)
     
-    with col_g1:
-        st.markdown('<div class="card shadow-lg border-t-blue" style="text-align: center; padding: 1rem;">', unsafe_allow_html=True)
-        st.markdown('<h3 style="color: #1e40af; font-size: 1.1rem; margin: 0;">Aliados Estratégicos</h3>', unsafe_allow_html=True)
-        st.markdown('<p style="color: #6b7280; font-size: 0.8rem; margin-bottom: 1rem;">Total: 17 Entidades</p>', unsafe_allow_html=True)
-        st.plotly_chart(crear_dona(aliados_data['labels'], aliados_data['values'], aliados_data['colors'], "Gestión"), use_container_width=True)
-        # Leyenda manual
-        st.markdown("""<div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; font-size: 0.7rem;">
-            <span style="color: #1e40af">● Insumos (10)</span>
-            <span style="color: #3b82f6">● Unis (4)</span>
-            <span style="color: #93c5fd">● Café (3)</span>
-        </div>""", unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    with col_g2:
-        st.markdown('<div class="card shadow-lg border-t-amber" style="text-align: center; padding: 1rem;">', unsafe_allow_html=True)
-        st.markdown('<h3 style="color: #92400e; font-size: 1.1rem; margin: 0;">Asistencia</h3>', unsafe_allow_html=True)
-        st.markdown('<p style="color: #6b7280; font-size: 0.8rem; margin-bottom: 1rem;">Total: ~200 Pax</p>', unsafe_allow_html=True)
-        st.plotly_chart(crear_dona(asistentes_data['labels'], asistentes_data['values'], asistentes_data['colors'], "Aforo"), use_container_width=True)
-        st.markdown("""<div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; font-size: 0.7rem;">
-            <span style="color: #b45309">● UTP (140)</span>
-            <span style="color: #f59e0b">● Ext (40)</span>
-            <span style="color: #fcd34d">● Staff (20)</span>
-        </div>""", unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    with col_g3:
-        st.markdown('<div class="card shadow-lg border-t-green" style="padding: 1rem;">', unsafe_allow_html=True)
-        st.markdown('<div style="text-align: center;"><h3 style="color: #166534; font-size: 1.1rem; margin: 0;">Cumplimiento Global</h3><p style="color: #6b7280; font-size: 0.8rem; margin-bottom: 1rem;">Por áreas</p></div>', unsafe_allow_html=True)
+    # Gráfico 1: Aliados
+    with c1:
+        fig1 = go.Figure(data=[go.Pie(labels=["Insumos", "Unis", "Café"], values=[10, 4, 3], hole=.7, marker=dict(colors=['#1e40af', '#3b82f6', '#93c5fd']))])
+        fig1.update_layout(showlegend=False, margin=dict(t=0, b=0, l=0, r=0), height=180, annotations=[dict(text="Gestión", x=0.5, y=0.5, font_size=12, showarrow=False)])
         
-        # Barras HTML
-        for item in cumplimiento_data:
-            st.markdown(f"""
-            <div style="margin-bottom: 10px;">
-                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; color: #374151;">
-                    <span>{item['label']}</span>
-                    <span>{item['value']}%</span>
-                </div>
-                <div class="progress-track">
-                    <div class="progress-fill-green" style="width: {item['value']}%;"></div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    # DOFA
-    col_d1, col_d2 = st.columns(2)
-    with col_d1:
         st.markdown("""
-        <div class="card" style="padding: 1.5rem; background: #f0fdf4; border: 1px solid #bbf7d0;">
-            <h4 style="color: #166534; margin: 0 0 10px 0; display: flex; align-items: center;">🏆 Fortalezas</h4>
-            <ul style="color: #14532d; font-size: 0.85rem; padding-left: 1.2rem; margin: 0;">
+        <div class="react-card" style="border-top: 4px solid #2563eb; padding: 1.5rem; text-align: center;">
+            <h3 style="color: #1e3a8a; margin: 0; font-size: 1.1rem;">Aliados Estratégicos</h3>
+            <p style="color: #6b7280; font-size: 0.8rem; margin-bottom: 1rem;">Total: 17 Entidades</p>
+        """, unsafe_allow_html=True)
+        st.plotly_chart(fig1, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # Gráfico 2: Asistencia
+    with c2:
+        fig2 = go.Figure(data=[go.Pie(labels=["UTP", "Externos", "Staff"], values=[140, 40, 20], hole=.7, marker=dict(colors=['#b45309', '#f59e0b', '#fcd34d']))])
+        fig2.update_layout(showlegend=False, margin=dict(t=0, b=0, l=0, r=0), height=180, annotations=[dict(text="Aforo", x=0.5, y=0.5, font_size=12, showarrow=False)])
+        
+        st.markdown("""
+        <div class="react-card" style="border-top: 4px solid #d97706; padding: 1.5rem; text-align: center;">
+            <h3 style="color: #78350f; margin: 0; font-size: 1.1rem;">Asistencia</h3>
+            <p style="color: #6b7280; font-size: 0.8rem; margin-bottom: 1rem;">Total: ~200 Pax</p>
+        """, unsafe_allow_html=True)
+        st.plotly_chart(fig2, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # Gráfico 3: Barras
+    with c3:
+        st.markdown("""
+        <div class="react-card" style="border-top: 4px solid #16a34a; padding: 1.5rem;">
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <h3 style="color: #14532d; margin: 0; font-size: 1.1rem;">Cumplimiento Global</h3>
+                <p style="color: #6b7280; font-size: 0.8rem;">Por áreas</p>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; color: #374151; margin-bottom: 4px;"><span>Gestión</span><span>91%</span></div>
+                <div class="prog-track"><div class="prog-fill" style="width: 91%; background-color: #16a34a;"></div></div>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; color: #374151; margin-bottom: 4px;"><span>Logística</span><span>98%</span></div>
+                <div class="prog-track"><div class="prog-fill" style="width: 98%; background-color: #16a34a;"></div></div>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; color: #374151; margin-bottom: 4px;"><span>Comunicaciones</span><span>100%</span></div>
+                <div class="prog-track"><div class="prog-fill" style="width: 100%; background-color: #16a34a;"></div></div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # DOFA
+    d1, d2 = st.columns(2)
+    with d1:
+        st.markdown("""
+        <div class="react-card" style="padding: 1.5rem; background: linear-gradient(to bottom right, #ffffff, #f0fdf4); border: 1px solid #bbf7d0;">
+            <h4 style="color: #166534; margin: 0 0 12px 0; font-weight: 700; display: flex; align-items: center;">🏆 Fortalezas</h4>
+            <ul style="margin: 0; padding-left: 1.2rem; color: #14532d; font-size: 0.9rem; line-height: 1.6;">
                 <li>Identidad Cafetera clara y transversal.</li>
-                <li>Capacidad de gestión (17 aliados).</li>
+                <li>Capacidad de gestión (17 aliados sin presupuesto).</li>
                 <li>Trabajo articulado entre comisiones.</li>
             </ul>
         </div>
         """, unsafe_allow_html=True)
-    with col_d2:
+    with d2:
         st.markdown("""
-        <div class="card" style="padding: 1.5rem; background: #fef2f2; border: 1px solid #fecaca;">
-            <h4 style="color: #991b1b; margin: 0 0 10px 0; display: flex; align-items: center;">⚠️ Oportunidades de Mejora</h4>
-            <ul style="color: #7f1d1d; font-size: 0.85rem; padding-left: 1.2rem; margin: 0;">
+        <div class="react-card" style="padding: 1.5rem; background: linear-gradient(to bottom right, #ffffff, #fef2f2); border: 1px solid #fecaca;">
+            <h4 style="color: #991b1b; margin: 0 0 12px 0; font-weight: 700; display: flex; align-items: center;">⚠️ Oportunidades</h4>
+            <ul style="margin: 0; padding-left: 1.2rem; color: #7f1d1d; font-size: 0.9rem; line-height: 1.6;">
                 <li>Mayor anticipación en piezas gráficas.</li>
                 <li>Recursos técnicos propios limitados.</li>
                 <li>Dependencia alta de gestión externa.</li>
@@ -283,65 +293,58 @@ with tab1:
         </div>
         """, unsafe_allow_html=True)
 
-# --- FUNCION GENERADORA DE TABS DE FASE ---
-def render_phase_tab(phase_key):
-    for commission in phases[phase_key]:
-        # Estilos dinámicos según el color de la comisión en los datos
-        color_class = commission['color'] # ej: text-blue-700
-        bg_class = commission['bg'] # ej: bg-blue-50
-        border_class = commission['border'] # ej: border-l-blue
+# --- FUNCIÓN PARA RENDERIZAR TABLAS DETALLADAS ---
+def render_detailed_tab(phase_name):
+    for commission in phases[phase_name]:
+        # Configurar colores para HTML
+        text_color = "#1d4ed8" if "blue" in commission['color'] else "#b45309" if "amber" in commission['color'] else "#15803d" if "green" in commission['color'] else "#7e22ce"
+        bg_bar = "#2563eb" if "blue" in commission['color'] else "#d97706" if "amber" in commission['color'] else "#16a34a" if "green" in commission['color'] else "#a855f7"
+        border_class = f"border-l-8 {commission['border'].replace('border-l-', 'border-l-color-')}" # mapeo simple
         
-        # Mapa de colores para las barras internas
-        bar_color = "progress-fill-green"
-        if "blue" in color_class: bar_color = "progress-fill-blue"
-        if "amber" in color_class: bar_color = "progress-fill-amber"
-        if "purple" in color_class: bar_color = "progress-fill-green" # Purple usa verde por defecto
-
-        # Generar filas de la tabla
+        # HTML de filas
         rows_html = ""
         for ind in commission['indicators']:
-            # Lógica de color de porcentaje
-            perc_color = "#16a34a" # verde
-            if ind['perc'] < 100: perc_color = "#d97706" # ambar
-            if ind['perc'] < 60: perc_color = "#dc2626" # rojo
-
+            perc_color = "#16a34a" # Green default
+            if ind['perc'] < 100: perc_color = "#d97706"
+            if ind['perc'] < 60: perc_color = "#dc2626"
+            
             rows_html += f"""
             <tr>
                 <td style="font-weight: 500;">{ind['item']}</td>
                 <td style="text-align: center; color: #78716c;">{ind['meta']}</td>
                 <td style="text-align: center; font-weight: 700;">{ind['ejec']}</td>
-                <td style="width: 150px;">
+                <td style="width: 140px;">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <div class="progress-track" style="flex: 1;">
-                            <div class="{bar_color}" style="width: {ind['perc']}%; background-color: {perc_color};"></div>
+                        <div class="prog-track">
+                            <div class="prog-fill" style="width: {ind['perc']}%; background-color: {perc_color};"></div>
                         </div>
                         <span style="font-size: 0.75rem; font-weight: 700; color: {perc_color};">{ind['perc']}%</span>
                     </div>
                 </td>
             </tr>
             """
-
+            
         st.markdown(f"""
-        <div class="card shadow-lg {border_class}" style="overflow: hidden;">
-            <div class="{bg_class}" style="padding: 1rem; border-bottom: 1px solid #e7e5e4; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div class="react-card" style="border-left: 6px solid {bg_bar};">
+            <div class="{commission['bg_header']}" style="padding: 1rem 1.5rem; border-bottom: 1px solid #e7e5e4; display: flex; justify-content: space-between; align-items: center;">
                 <div style="display: flex; align-items: center; gap: 1rem;">
-                    <div style="background: white; padding: 8px; border-radius: 50%; font-size: 1.2rem; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
-                        {commission['icon']}
+                    <div style="color: {text_color}; background: white; padding: 8px; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                        {ICONS[commission['icon']]}
                     </div>
                     <div>
-                        <h3 style="margin: 0; font-size: 1.25rem;" class="{color_class.replace('text-', 'text-color-')}">{commission['name']}</h3>
-                        <div style="font-size: 0.8rem; color: #57534e;">👤 Líderes: {commission['lead']}</div>
+                        <h3 style="margin: 0; color: {text_color}; font-size: 1.25rem;">{commission['name']}</h3>
+                        <div style="font-size: 0.8rem; color: #57534e; display: flex; align-items: center; gap: 4px;">
+                             {ICONS['users']} Líderes: {commission['lead']}
+                        </div>
                     </div>
                 </div>
-                <div style="background: white; padding: 5px 10px; border-radius: 6px; border: 1px solid #e7e5e4; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                    <span style="font-size: 0.65rem; font-weight: 700; color: #a8a29e; text-transform: uppercase;">Estado Fase</span>
-                    <div style="color: #16a34a; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center;">
-                        ✅ Completado 100%
-                    </div>
+                <div style="background: white; padding: 6px 12px; border-radius: 8px; border: 1px solid #e7e5e4; text-align: right;">
+                    <div style="text-transform: uppercase; font-size: 0.65rem; font-weight: 700; color: #a8a29e;">Estado</div>
+                    <div style="color: #16a34a; font-weight: 700; font-size: 0.85rem;">Completo 100%</div>
                 </div>
             </div>
             <div style="overflow-x: auto;">
-                <table class="custom-table">
+                <table class="styled-table">
                     <thead>
                         <tr>
                             <th>Indicador / Actividad</th>
@@ -355,46 +358,42 @@ def render_phase_tab(phase_key):
                     </tbody>
                 </table>
             </div>
-            <div style="background: #fafaf9; padding: 8px; text-align: center; font-size: 0.7rem; color: #a8a29e; border-top: 1px solid #e7e5e4;">
-                ℹ️ Datos extraídos del informe final de {commission['name']}
+            <div style="background: #fafaf9; padding: 8px 1.5rem; border-top: 1px solid #e7e5e4; font-size: 0.75rem; color: #a8a29e; font-style: italic;">
+                Datos extraídos del informe final de {commission['name']}
             </div>
         </div>
         """, unsafe_allow_html=True)
 
-# --- RENDERIZADO DE TABS DE FASE ---
 with tab2:
-    render_phase_tab("antes")
+    render_detailed_tab("antes")
 with tab3:
-    render_phase_tab("durante")
+    render_detailed_tab("durante")
 with tab4:
-    render_phase_tab("despues")
+    render_detailed_tab("despues")
 
-# --- FOOTER: MATRIZ ALIADOS ---
+# --- FOOTER FINAL ---
 st.markdown("""
-<div class="card shadow-lg" style="background: #292524; color: white; border-top: 4px solid #d97706; margin-top: 2rem;">
-    <div style="padding: 1.5rem; border-bottom: 1px solid #44403c;">
-        <h3 style="margin: 0; display: flex; align-items: center; font-size: 1.2rem;">
-            🤝 Resumen de Alianzas (Matriz)
-        </h3>
+<div class="react-card" style="background-color: #1c1917; color: white; border-top: 4px solid #d97706; margin-top: 3rem;">
+    <div style="padding: 1.5rem; display: flex; align-items: center; gap: 1rem; border-bottom: 1px solid #44403c;">
+        <div style="color: #f59e0b;">""" + ICONS['briefcase'] + """</div>
+        <h3 style="margin: 0; font-size: 1.2rem;">Resumen de Alianzas (Matriz)</h3>
     </div>
-    <div style="padding: 1.5rem;">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; text-align: center;">
-            <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
-                <div style="font-size: 1.5rem; font-weight: 800; color: #fbbf24;">17</div>
-                <div style="font-size: 0.7rem; text-transform: uppercase; opacity: 0.7;">Aliados Totales</div>
-            </div>
-            <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
-                <div style="font-size: 1.5rem; font-weight: 800; color: #60a5fa;">5</div>
-                <div style="font-size: 0.7rem; text-transform: uppercase; opacity: 0.7;">Universidades</div>
-            </div>
-            <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
-                <div style="font-size: 1.5rem; font-weight: 800; color: #4ade80;">10</div>
-                <div style="font-size: 0.7rem; text-transform: uppercase; opacity: 0.7;">Empresas Privadas</div>
-            </div>
-            <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
-                <div style="font-size: 1.5rem; font-weight: 800; color: #c084fc;">2</div>
-                <div style="font-size: 0.7rem; text-transform: uppercase; opacity: 0.7;">Cooperativas</div>
-            </div>
+    <div style="padding: 1.5rem; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; text-align: center;">
+        <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;">
+            <div style="font-size: 1.5rem; font-weight: 700; color: #fbbf24;">17</div>
+            <div style="font-size: 0.7rem; text-transform: uppercase; opacity: 0.7;">Total Aliados</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;">
+            <div style="font-size: 1.5rem; font-weight: 700; color: #60a5fa;">5</div>
+            <div style="font-size: 0.7rem; text-transform: uppercase; opacity: 0.7;">Universidades</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;">
+            <div style="font-size: 1.5rem; font-weight: 700; color: #4ade80;">10</div>
+            <div style="font-size: 0.7rem; text-transform: uppercase; opacity: 0.7;">Privados</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px;">
+            <div style="font-size: 1.5rem; font-weight: 700; color: #c084fc;">2</div>
+            <div style="font-size: 0.7rem; text-transform: uppercase; opacity: 0.7;">Cooperativas</div>
         </div>
     </div>
 </div>
